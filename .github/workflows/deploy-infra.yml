@@ -31,12 +31,12 @@ jobs:
       - name: 'Terraform init'
         id: init
         run: |
-          terraform init \
-          -backend-config="resource_group_name=$backendrgname" \
-          -backend-config="storage_account_name=$backendstorageacctname" \
-          -backend-config="container_name=$backendcontainername" \
-          -backend-config="key=$backendstatefilename" \
-          -backend-config="access_key=${{ secrets.SA_KEY1 }}" \
+          terraform init `
+          -backend-config="resource_group_name=$backendrgname" `
+          -backend-config="storage_account_name=$backendstorageacctname" `
+          -backend-config="container_name=$backendcontainername" `
+          -backend-config="key=$backendstatefilename" `
+          -backend-config="access_key=${{ secrets.SA_KEY1 }}" `
           -input=false
       
       # terraform validate
