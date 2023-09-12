@@ -9,9 +9,13 @@ env:
       ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      backendrgname: 'terraform-rg'
+      backendstorageacctname: 'ajiaccount'
+      backendcontainername: 'githubterraformstatepoc'
+      backendstatefilename: 'poc_terraform.tfstate'
 
 jobs:
-  Terraform:
+  Terraform-plan:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,18 +27,25 @@ jobs:
       - name: 'Setup terraform'
         uses: hashicorp/setup-terraform@v2
 
-      # Runs a single command using the runners shell
+      # terraform init and backend setup
       - name: 'Terraform init'
         id: init
         run: |
           terraform init `
-          -backend-config=resource_group_name="tf_rgname" `
-          -backend-config=storage_account_name=saname `
-          -backend-config=container_name=tfstate `
-          -backend-config=key=nameoftheconfigfile ` 
-          -backend-config=access_key=${{ secrets.sa_key1 }} `
+          -backend-config=resource_group_name=$backendrgname `
+          -backend-config=storage_account_name=$backendstorageacctname `
+          -backend-config=container_name=$backendcontainername `
+          -backend-config=key=$backendstatefilename ` 
+          -backend-config=access_key=${{ secrets.SA_KEY1 }} `
           -input=false
-        
+      
+      # terraform validate
+      - name: 'Terraform Validate'
+        id: validate
+        run: |
+          terraform validate -no-color
+      
+      # terraform plan
       - name: 'Terraform plan'
         id: plan
         run: |
