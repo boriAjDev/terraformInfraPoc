@@ -1,0 +1,5 @@
+# pipeline to deploy infra
+name: Deploy Infra to Environments
+
+on: 
+  workflow_dispatch
