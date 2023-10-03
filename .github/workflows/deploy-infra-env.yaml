@@ -1,0 +1,62 @@
+# pipeline to deploy infra
+name: Terraform Infra with Fed Identity Env version
+
+on: 
+  workflow_dispatch
+
+# configured workflow to enable GitHub tokens
+permissions: 
+  id-token: write
+  contents: read
+
+jobs:
+  Terraform-plan-and-apply:
+    runs-on: ubuntu-latest
+    environment: poc
+      
+    steps:
+        # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+
+      #login to azure with federated identity
+      - name: 'Az CLI login'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.SUBSCRIPTION_ID }}
+
+     # list all RGs SPN has access to 
+      - name: 'run az commands'
+        run: |
+          az group list
+
+      # setup terraform
+      - name: 'Setup terraform'
+        uses: hashicorp/setup-terraform@v2
+
+      # terraform init and backend setup
+      - name: 'Terraform init'
+        id: init
+        run: |
+          terraform init -backend-config=resource_group_name=$backendrgname -backend-config=storage_account_name=$backendstorageacctname -backend-config=container_name=$backendcontainername -backend-config=key=$backendstatefilename -backend-config=access_key=${{ secrets.SA_KEY1 }} -input=false
+      
+      # terraform validate
+      - name: 'Terraform Validate'
+        id: validate
+        run: |
+          terraform validate -no-color
+      
+      # terraform plan
+      - name: 'Terraform plan'
+        id: plan
+        run: |
+          terraform plan 
+
+      # terraform apply
+      - name: Terraform Apply
+        id: apply
+        #if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: |
+          terraform apply -auto-approve -input=false
